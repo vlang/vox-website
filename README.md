@@ -1,6 +1,6 @@
-# vox.sx
+# Vox browser website
 
-The Vox browser website restored from the [January 4, 2024 Wayback capture](https://web.archive.org/web/20240104201201/https://vox.sx/), served by **V + veb**. The original copy, download links, section order, colors and main browser screenshot are retained. This is a historical restoration: the benchmark claims, release links and roadmap describe that capture.
+The Vox browser website restored from the [January 4, 2024 Wayback capture](https://web.archive.org/web/20240104201201/https://vox.sx/), served by **V + veb** at `vox-browser.org`. The original copy, download links, section order, colors and main browser screenshot are retained. This is a historical restoration: the benchmark claims, release links and roadmap describe that capture.
 
 `GET /` serves the page. `GET /stats228` renders the dashboard from the existing [`~/code/traffic`](../traffic) module, with visits isolated under the `vox` site ID. `POST /stats228` handles its authenticated day notes. Static files are served under `/assets/`; source and archive files are not exposed.
 
@@ -50,7 +50,39 @@ VOX_SECURE_COOKIES=1 ./bin/vox-website
 
 Run from this directory, or set `VOX_ASSETS_DIR` to the deployed asset directory. The homepage and shared dashboard templates are embedded in the binary; ship `assets/` alongside it. Keep the database on persistent storage and supply credentials and the optional notes key through the service environment, outside Git.
 
-Terminate HTTPS at the reverse proxy and forward requests, including `/stats228`, to the configured loopback port. Preserve `Host`, `Referer`, `User-Agent` and the trusted country header. Disable proxy/CDN caching for `/` and `/stats228`; static assets may be cached. Set `VOX_SECURE_COOKIES=1` in production. No deployment or DNS changes are performed by this repository.
+Terminate HTTPS at the reverse proxy and forward requests, including `/stats228`, to the configured loopback port. Preserve `Host`, `Referer`, `User-Agent` and the trusted country header. Disable proxy/CDN caching for `/` and `/stats228`; static assets may be cached. Set `VOX_SECURE_COOKIES=1` in production.
+
+## Deploy to vpm
+
+```sh
+./deploy.sh --dry-run
+./deploy.sh
+# After both DNS names resolve to vpm:
+./deploy.sh --https
+```
+
+The script cross-compiles a Linux x86-64 production binary locally and uploads only the binary, assets and deployment configuration to a new release directory on `vpm` (`DEPLOY_HOST` overrides that SSH alias). It does not compile on the shared 2 GiB server. `--dry-run` checks SSH and builds locally without changing the server.
+
+The Linux target uses V's compatibility C backend (`CROSS_VFLAGS=-old-compiler`). The script imports the target server's public `libpq.so.5` for linking, so the deployed binary uses Debian's managed PostgreSQL client library. This avoids the incomplete `libpgport` stubs in V's bundled cross-compilation sysroot, which produced malformed SCRAM proofs. Install `libpq5` on the target before deployment. To build without SSH, set `LINUX_LIBPQ` to a compatible Linux library. Compiler/link commands and library/binary hashes are recorded in `build/linux-build.json`.
+
+The mbedTLS build uses portable integer division to avoid an unresolved cross-linker runtime symbol. Password authentication and TLS support remain enabled. The build helper reuses the linker command printed by V, replacing the static PostgreSQL library and its stubs with the actual target library, and fails if it cannot find that command.
+
+Provisioning uses the existing Nginx and PostgreSQL installations, installing missing packages on Debian when necessary. It creates a dedicated `vox` system user, PostgreSQL role and database, then runs [`vox-website.service`](deploy/vox-website.service) on `127.0.0.1:8098`. Database access uses a generated password over loopback TCP, with SCRAM authentication rules scoped to the `vox` database and role; PostgreSQL stays private. The service runs without root privileges and has a 256 MiB memory limit.
+
+The database password and generated day-notes key are stored only on the server in `/etc/vox-website.env` (root-owned, group `vox`, mode `0640`). Later deployments preserve them. Authorized administrators can retrieve the notes key from that file; it is not included in the uploaded release or Git.
+
+Releases live under `/var/www/vox-browser.org/releases/`; `current` points to the active release. Startup checks verify both the homepage and statistics endpoint before Nginx is reloaded. A failed application startup restores the previous release when one exists. Nginx configuration is validated before reload, and existing sites are retained. Nginx serves assets directly, preserving complete image responses.
+
+The initial Nginx configuration accepts HTTP so DNS and ACME validation can be completed. `--https` requests a Let's Encrypt certificate for `vox-browser.org` and `www.vox-browser.org`, installs the HTTPS configuration, redirects HTTP and `www` to `https://vox-browser.org`, and leaves the ACME webroot accessible for renewals. It reuses the server's Certbot account. Existing HTTPS deployments remain on HTTPS when deploying without the flag. Ensure the server's Certbot renewal timer is enabled.
+
+Cloudflare DNS should contain:
+
+| Type | Name | Target |
+| --- | --- | --- |
+| A | `@` | `193.168.144.108` |
+| CNAME | `www` | `vox-browser.org` |
+
+Use the nameserver pair assigned to this zone by Cloudflare in Dynadot's domain-specific nameserver settings. Keep the records DNS-only during initial origin certificate issuance, then enable proxying and set Cloudflare SSL/TLS mode to **Full (strict)**. Preserve `Cache-Control: no-store` for `/` and `/stats228`; do not add a cache-everything rule for those paths. Registrar and Cloudflare account changes are performed separately from the deployment script.
 
 ## Verification
 

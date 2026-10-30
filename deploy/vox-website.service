@@ -1,0 +1,31 @@
+[Unit]
+Description=Vox browser website (V + veb)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=vox
+Group=vox
+WorkingDirectory=/var/www/vox-browser.org/current
+Environment=HOST=127.0.0.1
+Environment=PORT=8098
+Environment=VOX_SECURE_COOKIES=1
+Environment=PGTZ=UTC
+EnvironmentFile=/etc/vox-website.env
+ExecStart=/var/www/vox-browser.org/current/vox-website
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+UMask=0077
+MemoryHigh=192M
+MemoryMax=256M
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target
