@@ -1,0 +1,34 @@
+{
+  "snapshot": "https://web.archive.org/web/20240104201201/https://vox.sx/",
+  "files": [
+    {
+      "path": "archive/index-20240104.html",
+      "source": "https://web.archive.org/web/20240104201201id_/https://vox.sx/",
+      "sha256": "7e5dcaa0965da2d4ecc70b13c481c775a27dbc96fd297a37b32e2305c29bc2bf"
+    },
+    {
+      "path": "archive/index-20231122.css",
+      "source": "https://web.archive.org/web/20231122151045id_/https://vox.sx/zz_files/index.css",
+      "sha256": "0c923f15c83d6d6dce81993b71820a4bae400f315c7639c8f64c6a8655eb804c"
+    },
+    {
+      "path": "assets/screen1.png",
+      "source": "https://web.archive.org/web/20231122151043id_/https://vox.sx/zz_files/screen1.png",
+      "sha256": "960c81fe0f5dd3169491be8fe65407d2b6e6f0f40b862ed53775f7a304962d97"
+    }
+  ],
+  "unavailable_images": [
+    "1highlighting.png",
+    "1inspections.png",
+    "1generation.png",
+    "1completion.png",
+    "1quickdoc.png",
+    "1goto.png",
+    "1usages.png",
+    "1file-structure.png",
+    "1search-everywhere.png",
+    "1testing.png",
+    "1debugging.png"
+  ],
+  "unavailable_images_status": 404
+}

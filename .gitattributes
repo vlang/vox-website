@@ -1,0 +1,3 @@
+# Preserve the archived source bytes, including original whitespace.
+archive/*.html -whitespace
+archive/*.css -whitespace
