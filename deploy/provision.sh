@@ -164,5 +164,11 @@ fi
 rm -f "$nginx_backup"
 systemctl enable --now nginx
 systemctl reload nginx
+if [[ -f /etc/letsencrypt/live/vox-browser.org/fullchain.pem ]]; then
+    install -d -m 0755 /etc/letsencrypt/renewal-hooks/deploy
+    install -m 0755 "$release_dir/deploy/certbot-reload-nginx.sh" \
+        /etc/letsencrypt/renewal-hooks/deploy/vox-website
+    systemctl enable --now certbot.timer
+fi
 systemctl is-active --quiet "$service"
 printf 'Deployed %s to %s\n' "$service" "$release_dir"

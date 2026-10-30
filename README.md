@@ -73,7 +73,7 @@ The database password and generated day-notes key are stored only on the server 
 
 Releases live under `/var/www/vox-browser.org/releases/`; `current` points to the active release. Startup checks verify both the homepage and statistics endpoint before Nginx is reloaded. A failed application startup restores the previous release when one exists. Nginx configuration is validated before reload, and existing sites are retained. Nginx serves assets directly, preserving complete image responses.
 
-The initial Nginx configuration accepts HTTP so DNS and ACME validation can be completed. `--https` requests a Let's Encrypt certificate for `vox-browser.org` and `www.vox-browser.org`, installs the HTTPS configuration, redirects HTTP and `www` to `https://vox-browser.org`, and leaves the ACME webroot accessible for renewals. It reuses the server's Certbot account. Existing HTTPS deployments remain on HTTPS when deploying without the flag. Ensure the server's Certbot renewal timer is enabled.
+The initial Nginx configuration accepts HTTP so DNS and ACME validation can be completed. `--https` requests a Let's Encrypt certificate for `vox-browser.org` and `www.vox-browser.org`, installs the HTTPS configuration, redirects HTTP and `www` to `https://vox-browser.org`, and leaves the ACME webroot accessible for renewals. It reuses the server's Certbot account. Existing HTTPS deployments remain on HTTPS when deploying without the flag. Provisioning enables the Certbot renewal timer and installs a hook that validates and reloads Nginx after this domain's certificate renews.
 
 Cloudflare DNS should contain:
 
