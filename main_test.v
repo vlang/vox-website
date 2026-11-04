@@ -8,7 +8,7 @@ fn test_restored_home_and_preview_stats_routes() {
 	home := veb.render_request[App, Context](mut app, http.Request{ url: '/' })!
 	assert home.res.status() == .ok
 	assert home.res.body.contains('A completely new browser engine built from scratch')
-	assert home.res.body.contains('/assets/screen1.png')
+	assert home.res.body.contains('/assets/screen1.png?v=')
 	assert !home.res.body.contains('googletagmanager')
 	assert !home.res.body.contains('gtag(')
 	assert home.res.header.get(.set_cookie) == none
