@@ -107,3 +107,5 @@ Restoration repairs:
 - Repaired the alpha badge and screenshot overflow, made the screenshot visible on narrow screens, and added keyboard focus outlines.
 
 The archived “Something more” placeholders and dated roadmap copy are preserved as originally published.
+
+The homepage screenshot `assets/screen1.png` is a current capture of Vox rendering news.ycombinator.com (1112x1140, taken with `capture_screenshot.sh` from `~/code/vox2`). The original 2023 screenshot is kept at `archive/screen1-20231122.png`.
