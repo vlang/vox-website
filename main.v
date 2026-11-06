@@ -1,5 +1,6 @@
 module main
 
+import db.pg
 import net.http
 import os
 import strconv
@@ -9,6 +10,7 @@ import veb
 
 const home_html = $embed_file('index.html').to_string()
 const visit_cookie_name = 'vox_session_visit'
+const vox_version = '0.1'
 
 pub struct Context {
 	veb.Context
@@ -23,6 +25,8 @@ mut:
 	stats_tracker &traffic.Tracker = unsafe { nil }
 	visit_lock    sync.Mutex
 	stats_lock    sync.Mutex
+	version_lock  sync.Mutex
+	version_db    pg.DB
 }
 
 struct Config {
@@ -50,6 +54,9 @@ fn new_app(config Config) !&App {
 			site_id:   'vox'
 			notes_key: config.notes_key
 		})!
+		mut db := pg.connect_with_conninfo(config.conninfo, pg.PoolConfig{})!
+		db.exec('CREATE TABLE IF NOT EXISTS version_checks (id BIGSERIAL PRIMARY KEY, checked_at TIMESTAMPTZ NOT NULL DEFAULT now(), os_version TEXT NOT NULL, vox_version TEXT NOT NULL)')!
+		app.version_db = *db
 	}
 	return app
 }
@@ -78,6 +85,41 @@ pub fn (mut app App) index(mut ctx Context) veb.Result {
 	// A shared cache must not bypass collection or replay another visitor's cookie.
 	ctx.set_header(.cache_control, 'no-store')
 	return ctx.html(home_html)
+}
+
+// Updaters report their state as /version?os=<OS version>&vox=<installed Vox version>.
+@['/version'; get; head]
+pub fn (mut app App) version(mut ctx Context) veb.Result {
+	ctx.set_header(.cache_control, 'no-store')
+	if app.tracking_enabled {
+		os_version := clip_param(ctx.query['os'])
+		installed := clip_param(ctx.query['vox'])
+		if !app.record_version_check(os_version, installed) {
+			ctx.res.set_status(.internal_server_error)
+			return ctx.text('Could not record version check\n')
+		}
+	}
+	return ctx.json({
+		'version': vox_version
+	})
+}
+
+fn clip_param(value string) string {
+	trimmed := value.trim_space()
+	return if trimmed.len > 128 { trimmed[..128] } else { trimmed }
+}
+
+fn (mut app App) record_version_check(os_version string, installed string) bool {
+	app.version_lock.lock()
+	defer {
+		app.version_lock.unlock()
+	}
+	app.version_db.exec_param_many('INSERT INTO version_checks (os_version, vox_version) VALUES ($1, $2)',
+		[os_version, installed]) or {
+		eprintln('Could not record Vox version check: ${err}')
+		return false
+	}
+	return true
 }
 
 fn (mut app App) record_visit(ctx Context) bool {

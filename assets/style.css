@@ -2044,3 +2044,9 @@ a:focus-visible { outline: 3px solid #167dff; outline-offset: 5px; }
   .chapter.two-column-layout .chapter_inner .chapter__image-col { display: block; margin-top: 24px; }
   .first-page .first-page__inner { padding-right: 25px; }
 }
+.runs-on-vox .runs-on-vox__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; margin-top: 32px; }
+.runs-on-vox__item { margin: 0; }
+.runs-on-vox__item img, .runs-on-vox__placeholder { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; object-position: top left; border-radius: 8px; box-sizing: border-box; }
+.runs-on-vox__item img { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2); }
+.runs-on-vox__placeholder { display: flex; align-items: center; justify-content: center; border: 2px dashed #9a9ca0; color: #646567; background: rgba(0, 0, 0, 0.04); }
+.runs-on-vox__item figcaption { margin-top: 10px; font-weight: 600; text-align: center; }

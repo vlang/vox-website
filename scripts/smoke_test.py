@@ -115,6 +115,12 @@ def main():
                     assert "Set-Cookie" not in bot_headers
                 assert sql("SELECT COUNT(*) FROM visits WHERE site='vox' AND is_bot") == "2"
 
+                for _ in range(2):
+                    status, _, body = request("/version?os=macOS%2015.1&vox=0.0.1")
+                    assert status == 200 and json.loads(body) == {"version": "0.1"}
+                assert sql("SELECT os_version || '|' || vox_version FROM version_checks") == (
+                    "macOS 15.1|0.0.1\nmacOS 15.1|0.0.1")
+
                 for path, mime in [("/assets/style.css", "text/css"),
                                    ("/assets/screen1.png", "image/png"),
                                    ("/assets/favicon.svg", "image/svg+xml")]:

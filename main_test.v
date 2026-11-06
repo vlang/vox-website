@@ -8,6 +8,7 @@ fn test_restored_home_and_preview_stats_routes() {
 	home := veb.render_request[App, Context](mut app, http.Request{ url: '/' })!
 	assert home.res.status() == .ok
 	assert home.res.body.contains('A completely new browser engine built from scratch')
+	assert home.res.body.contains('/assets/hero-chatgpt.png?v=')
 	assert home.res.body.contains('/assets/screen1.png?v=')
 	assert !home.res.body.contains('googletagmanager')
 	assert !home.res.body.contains('gtag(')
@@ -28,7 +29,7 @@ fn test_restored_home_and_preview_stats_routes() {
 
 fn test_static_assets_are_served_without_exposing_source_archive() {
 	mut app := new_app(Config{})!
-	for asset in ['style.css', 'screen1.png', 'favicon.svg'] {
+	for asset in ['style.css', 'screen1.png', 'hero-chatgpt.png', 'favicon.svg'] {
 		ctx := veb.render_request[App, Context](mut app, http.Request{
 			url: '/assets/${asset}'
 		})!
@@ -38,6 +39,14 @@ fn test_static_assets_are_served_without_exposing_source_archive() {
 		ctx := veb.render_request[App, Context](mut app, http.Request{ url: path })!
 		assert ctx.res.status() == .not_found
 	}
+}
+
+fn test_version_endpoint() {
+	mut app := new_app(Config{})!
+	ctx := veb.render_request[App, Context](mut app, http.Request{ url: '/version' })!
+	assert ctx.res.status() == .ok
+	assert ctx.res.body.contains('"version":"0.1"')
+	assert (ctx.res.header.get(.cache_control) or { '' }) == 'no-store'
 }
 
 fn test_port_validation() {

@@ -108,4 +108,4 @@ Restoration repairs:
 
 The archived “Something more” placeholders and dated roadmap copy are preserved as originally published.
 
-The homepage screenshot `assets/screen1.png` is a current capture of Vox rendering news.ycombinator.com (the full macOS Vox window with rounded corners and shadow, 1252x1120, captured with the browser's `--screenshot` window mode from `~/code/vox2`). The original 2023 screenshot is kept at `archive/screen1-20231122.png`.
+The homepage screenshot `assets/screen1.png` is a current capture of Vox rendering news.ycombinator.com (the full macOS Vox window with rounded corners and shadow, 1252x1120, captured with the browser's `--screenshot` window mode from `~/code/vox2`). It appears in the "Runs on Vox" section; the hero image is `assets/hero-chatgpt.png` (Vox rendering chatgpt.com). `GET /version?os=<OS version>&vox=<installed Vox version>` returns `{"version":"0.1"}` for auto-updates and, when `VOX_DB_CONNINFO` is set, inserts a row (`checked_at`, `os_version`, `vox_version`) into the `version_checks` table for every hit. The original 2023 screenshot is kept at `archive/screen1-20231122.png`.
