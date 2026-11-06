@@ -11,6 +11,7 @@ import veb
 const home_html = $embed_file('index.html').to_string()
 const visit_cookie_name = 'vox_session_visit'
 const vox_version = '0.1.0'
+const releases_url = 'https://github.com/vox-browser/vox/releases'
 
 pub struct Context {
 	veb.Context
@@ -105,14 +106,33 @@ pub fn (mut app App) version(mut ctx Context) veb.Result {
 	return ctx.text(app.published_version())
 }
 
-// vox2's deploy.vsh replaces the version file after uploading each release, so
-// a release needs no website deploy. Without a valid file, serve vox_version.
-fn (app &App) published_version() string {
-	if app.version_file == '' {
-		return vox_version
+// The download button follows the release that /version announces. vox2's
+// deploy.vsh uploads Vox-<version>-arm64.dmg before it publishes the version.
+@['/download/macos'; get; head]
+pub fn (mut app App) download_macos(mut ctx Context) veb.Result {
+	ctx.set_header(.cache_control, 'no-store')
+	if version := app.release_file_version() {
+		return ctx.redirect('${releases_url}/download/${version}/Vox-${version}-arm64.dmg',
+			typ: .found
+		)
 	}
-	version := (os.read_file(app.version_file) or { return vox_version }).trim_space()
-	return if is_release_version(version) { version } else { vox_version }
+	// Without a published version, the latest release page lists its downloads.
+	return ctx.redirect('${releases_url}/latest', typ: .found)
+}
+
+// Without a valid version file, /version serves vox_version.
+fn (app &App) published_version() string {
+	return app.release_file_version() or { vox_version }
+}
+
+// vox2's deploy.vsh replaces the version file after uploading each release, so
+// a release needs no website deploy.
+fn (app &App) release_file_version() ?string {
+	if app.version_file == '' {
+		return none
+	}
+	version := (os.read_file(app.version_file) or { return none }).trim_space()
+	return if is_release_version(version) { version } else { none }
 }
 
 // Match the browser's update check: one to three numeric components.

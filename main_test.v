@@ -75,6 +75,33 @@ fn test_version_endpoint_serves_the_published_release_file() {
 	assert ctx.res.body == '0.1.0'
 }
 
+fn test_macos_download_follows_the_published_release() {
+	mut app := new_app(Config{})!
+	home := veb.render_request[App, Context](mut app, http.Request{ url: '/' })!
+	assert home.res.body.contains('href="/download/macos"')
+	assert !home.res.body.contains('.dmg')
+	unpublished := veb.render_request[App, Context](mut app, http.Request{ url: '/download/macos' })!
+	assert unpublished.res.status() == .found
+	assert (unpublished.res.header.get(.location) or { '' }) == 'https://github.com/vox-browser/vox/releases/latest'
+	path := os.join_path(os.vtmp_dir(), 'vox-website-download-${os.getpid()}')
+	defer {
+		os.rm(path) or {}
+	}
+	os.write_file(path, '0.1.1\n')!
+	mut published := new_app(Config{
+		version_file: path
+	})!
+	for method in [http.Method.get, .head] {
+		ctx := veb.render_request[App, Context](mut published, http.Request{
+			method: method
+			url:    '/download/macos'
+		})!
+		assert ctx.res.status() == .found
+		assert (ctx.res.header.get(.location) or { '' }) == 'https://github.com/vox-browser/vox/releases/download/0.1.1/Vox-0.1.1-arm64.dmg'
+		assert (ctx.res.header.get(.cache_control) or { '' }) == 'no-store'
+	}
+}
+
 fn test_port_validation() {
 	assert listen_port('8080')! == 8080
 	for value in ['', 'invalid', '0', '-1', '65536'] {
