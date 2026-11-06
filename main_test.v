@@ -45,7 +45,7 @@ fn test_version_endpoint() {
 	mut app := new_app(Config{})!
 	ctx := veb.render_request[App, Context](mut app, http.Request{ url: '/version' })!
 	assert ctx.res.status() == .ok
-	assert ctx.res.body.contains('"version":"0.1"')
+	assert ctx.res.body == '0.1.0'
 	assert (ctx.res.header.get(.cache_control) or { '' }) == 'no-store'
 }
 

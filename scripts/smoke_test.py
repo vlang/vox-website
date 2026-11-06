@@ -117,7 +117,7 @@ def main():
 
                 for _ in range(2):
                     status, _, body = request("/version?os=macOS%2015.1&vox=0.0.1")
-                    assert status == 200 and json.loads(body) == {"version": "0.1"}
+                    assert status == 200 and body == b"0.1.0"
                 assert sql("SELECT os_version || '|' || vox_version FROM version_checks") == (
                     "macOS 15.1|0.0.1\nmacOS 15.1|0.0.1")
 

@@ -10,7 +10,7 @@ import veb
 
 const home_html = $embed_file('index.html').to_string()
 const visit_cookie_name = 'vox_session_visit'
-const vox_version = '0.1'
+const vox_version = '0.1.0'
 
 pub struct Context {
 	veb.Context
@@ -99,9 +99,7 @@ pub fn (mut app App) version(mut ctx Context) veb.Result {
 			return ctx.text('Could not record version check\n')
 		}
 	}
-	return ctx.json({
-		'version': vox_version
-	})
+	return ctx.text(vox_version)
 }
 
 fn clip_param(value string) string {
