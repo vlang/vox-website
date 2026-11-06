@@ -12,6 +12,7 @@ Environment=HOST=127.0.0.1
 Environment=PORT=8098
 Environment=VOX_SECURE_COOKIES=1
 Environment=PGTZ=UTC
+Environment=VOX_VERSION_FILE=/var/www/vox-browser.org/version
 EnvironmentFile=/etc/vox-website.env
 ExecStart=/var/www/vox-browser.org/current/vox-website
 Restart=on-failure

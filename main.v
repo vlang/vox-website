@@ -20,6 +20,7 @@ pub struct App {
 	veb.StaticHandler
 	tracking_enabled bool
 	secure_cookies   bool
+	version_file     string
 mut:
 	tracker       &traffic.Tracker = unsafe { nil }
 	stats_tracker &traffic.Tracker = unsafe { nil }
@@ -34,12 +35,14 @@ struct Config {
 	notes_key      string
 	assets_dir     string = 'assets'
 	secure_cookies bool
+	version_file   string
 }
 
 fn new_app(config Config) !&App {
 	mut app := &App{
 		tracking_enabled: config.conninfo != ''
 		secure_cookies:   config.secure_cookies
+		version_file:     config.version_file
 	}
 	app.mount_static_folder_at(config.assets_dir, '/assets')!
 	if app.tracking_enabled {
@@ -99,7 +102,31 @@ pub fn (mut app App) version(mut ctx Context) veb.Result {
 			return ctx.text('Could not record version check\n')
 		}
 	}
-	return ctx.text(vox_version)
+	return ctx.text(app.published_version())
+}
+
+// vox2's deploy.vsh replaces the version file after uploading each release, so
+// a release needs no website deploy. Without a valid file, serve vox_version.
+fn (app &App) published_version() string {
+	if app.version_file == '' {
+		return vox_version
+	}
+	version := (os.read_file(app.version_file) or { return vox_version }).trim_space()
+	return if is_release_version(version) { version } else { vox_version }
+}
+
+// Match the browser's update check: one to three numeric components.
+fn is_release_version(version string) bool {
+	parts := version.split('.')
+	if parts.len > 3 {
+		return false
+	}
+	for part in parts {
+		if part.len == 0 || part.len > 9 || !part.bytes().all(it.is_digit()) {
+			return false
+		}
+	}
+	return true
 }
 
 fn clip_param(value string) string {
@@ -192,6 +219,7 @@ fn main() {
 		notes_key:      os.getenv('VOX_STATS_NOTES_KEY')
 		assets_dir:     os.getenv_opt('VOX_ASSETS_DIR') or { 'assets' }
 		secure_cookies: os.getenv('VOX_SECURE_COOKIES') == '1'
+		version_file:   os.getenv('VOX_VERSION_FILE')
 	}) or { panic('Could not initialize Vox website: ${err}') }
 	if !app.tracking_enabled {
 		eprintln('Preview mode: set VOX_DB_CONNINFO to enable visit collection and /stats228.')

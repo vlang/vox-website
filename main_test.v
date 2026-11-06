@@ -1,6 +1,7 @@
 module main
 
 import net.http
+import os
 import veb
 
 fn test_restored_home_and_preview_stats_routes() {
@@ -47,6 +48,31 @@ fn test_version_endpoint() {
 	assert ctx.res.status() == .ok
 	assert ctx.res.body == '0.1.0'
 	assert (ctx.res.header.get(.cache_control) or { '' }) == 'no-store'
+}
+
+fn test_version_endpoint_serves_the_published_release_file() {
+	path := os.join_path(os.vtmp_dir(), 'vox-website-version-${os.getpid()}')
+	defer {
+		os.rm(path) or {}
+	}
+	mut app := new_app(Config{
+		version_file: path
+	})!
+	for content, expected in {
+		'0.1.1\n':    '0.1.1'
+		'0.2.0':      '0.2.0'
+		'':           '0.1.0'
+		'<script>\n': '0.1.0'
+		'1.2.3.4':    '0.1.0'
+		'0..1':       '0.1.0'
+	} {
+		os.write_file(path, content)!
+		ctx := veb.render_request[App, Context](mut app, http.Request{ url: '/version' })!
+		assert ctx.res.body == expected
+	}
+	os.rm(path)!
+	ctx := veb.render_request[App, Context](mut app, http.Request{ url: '/version' })!
+	assert ctx.res.body == '0.1.0'
 }
 
 fn test_port_validation() {
