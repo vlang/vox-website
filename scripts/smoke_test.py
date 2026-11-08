@@ -123,7 +123,8 @@ def main():
 
                 for path, mime in [("/assets/style.css", "text/css"),
                                    ("/assets/screen1.png", "image/png"),
-                                   ("/assets/favicon.svg", "image/svg+xml")]:
+                                   ("/assets/favicon-32.png", "image/png"),
+                                   ("/assets/vox-logo.png", "image/png")]:
                     status, asset_headers, content = request(path)
                     assert status == 200 and mime in asset_headers["Content-Type"] and content
                 for path in ["/missing", "/archive/index-20240104.html", "/main.v", "/v.mod"]:

@@ -1,10 +1,12 @@
 module main
 
 import db.pg
+import x.json2
 import net.http
 import os
 import strconv
 import sync
+import time
 import traffic
 import veb
 
@@ -12,6 +14,9 @@ const home_html = $embed_file('index.html').to_string()
 const visit_cookie_name = 'vox_session_visit'
 const vox_version = '0.1.0'
 const releases_url = 'https://github.com/vox-browser/vox/releases'
+const releases_api_url = 'https://api.github.com/repos/vox-browser/vox/releases'
+const download_size_marker = '<!--dmg-size-->'
+const download_size_retry = 10 * time.minute
 
 pub struct Context {
 	veb.Context
@@ -29,6 +34,27 @@ mut:
 	stats_lock    sync.Mutex
 	version_lock  sync.Mutex
 	version_db    pg.DB
+	download_size &DownloadSize = unsafe { nil }
+}
+
+struct ReleaseAsset {
+	name string
+	size i64
+}
+
+struct Release {
+	assets []ReleaseAsset
+}
+
+// DownloadSize caches the published DMG's size. It is looked up once per
+// release in the background, so page requests never wait for GitHub.
+struct DownloadSize {
+mut:
+	lock      sync.Mutex
+	version   string
+	bytes     i64
+	pending   bool
+	looked_up time.Time
 }
 
 struct Config {
@@ -44,6 +70,7 @@ fn new_app(config Config) !&App {
 		tracking_enabled: config.conninfo != ''
 		secure_cookies:   config.secure_cookies
 		version_file:     config.version_file
+		download_size:    &DownloadSize{}
 	}
 	app.mount_static_folder_at(config.assets_dir, '/assets')!
 	if app.tracking_enabled {
@@ -88,7 +115,7 @@ pub fn (mut app App) index(mut ctx Context) veb.Result {
 	}
 	// A shared cache must not bypass collection or replay another visitor's cookie.
 	ctx.set_header(.cache_control, 'no-store')
-	return ctx.html(home_html)
+	return ctx.html(home_html.replace(download_size_marker, app.download_size_label()))
 }
 
 // Updaters report their state as /version?os=<OS version>&vox=<installed Vox version>.
@@ -112,12 +139,81 @@ pub fn (mut app App) version(mut ctx Context) veb.Result {
 pub fn (mut app App) download_macos(mut ctx Context) veb.Result {
 	ctx.set_header(.cache_control, 'no-store')
 	if version := app.release_file_version() {
-		return ctx.redirect('${releases_url}/download/${version}/Vox-${version}-arm64.dmg',
+		return ctx.redirect('${releases_url}/download/${version}/${dmg_name(version)}',
 			typ: .found
 		)
 	}
 	// Without a published version, the latest release page lists its downloads.
 	return ctx.redirect('${releases_url}/latest', typ: .found)
+}
+
+fn dmg_name(version string) string {
+	return 'Vox-${version}-arm64.dmg'
+}
+
+// The download button shows the published DMG's size once it is known.
+fn (mut app App) download_size_label() string {
+	version := app.release_file_version() or { return '' }
+	bytes := app.download_size.get(version)
+	if bytes <= 0 {
+		return ''
+	}
+	return '<span class="download-button__size">${format_download_size(bytes)}</span>'
+}
+
+fn format_download_size(bytes i64) string {
+	return '${f64(bytes) / 1_000_000:.0f} MB'
+}
+
+// get returns the known size of version's DMG, or 0 while it is being looked up.
+// A failed lookup is retried after download_size_retry.
+fn (mut size DownloadSize) get(version string) i64 {
+	size.lock.lock()
+	defer {
+		size.lock.unlock()
+	}
+	if size.version == version && size.bytes > 0 {
+		return size.bytes
+	}
+	if !size.pending && (size.version != version || time.since(size.looked_up) > download_size_retry) {
+		size.version = version
+		size.bytes = 0
+		size.pending = true
+		size.looked_up = time.now()
+		spawn size.look_up(version)
+	}
+	return 0
+}
+
+fn (mut size DownloadSize) look_up(version string) {
+	bytes := release_dmg_size(version) or {
+		eprintln('Could not look up the size of the Vox ${version} DMG: ${err}')
+		i64(0)
+	}
+	size.lock.lock()
+	if size.version == version {
+		size.bytes = bytes
+	}
+	size.pending = false
+	size.lock.unlock()
+}
+
+fn release_dmg_size(version string) !i64 {
+	response := http.fetch(
+		url:    '${releases_api_url}/tags/${version}'
+		header: http.new_header(key: .user_agent, value: 'vox-website')
+	)!
+	if response.status_code != 200 {
+		return error('GitHub returned HTTP ${response.status_code}')
+	}
+	release := json2.decode[Release](response.body)!
+	name := dmg_name(version)
+	for asset in release.assets {
+		if asset.name == name && asset.size > 0 {
+			return asset.size
+		}
+	}
+	return error('the release has no ${name}')
 }
 
 // Without a valid version file, /version serves vox_version.

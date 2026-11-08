@@ -20,14 +20,16 @@
 
     <title>Vox: Upcoming open-source browser engine in V</title>
 
-    <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png?v=20261107b">
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/favicon-192.png?v=20261107b">
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20261107b">
     <link rel="stylesheet" href="/assets/style.css?v=20261108a">
 </head>
 <body>
 
 <div class="sub-header">
     <div class="header__inner">
-        <a href="/" class="header__title inner-link">Vox</a>
+        <a href="/" class="header__title header__logo inner-link" aria-label="Vox home"><img src="/assets/vox-logo.png?v=20261107b" width="40" height="40" alt="Vox"></a>
         <nav class="header__navbar" aria-label="Vox community">
             <div class="social-links">
 
@@ -89,7 +91,8 @@
 <!--
          <a href="https://github.com/vlang/vox-browser/releases/download/0.0.1/vox_windows_x64.zip" target="_blank" rel="noopener noreferrer" class="first-page__download-button inner-link">Download for Windows</a>
 -->
-            <a href="/download/macos" target="_blank" rel="noopener noreferrer" class="first-page__download-button inner-link">Download for macOS</a>
+            <a href="/download/macos" target="_blank" rel="noopener noreferrer" class="first-page__download-button first-page__download-button--macos inner-link"><svg class="download-button__apple" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>Download for macOS<!--dmg-size--></a>
+Source code release on Nov 8.
 
 
         </div>
@@ -100,12 +103,15 @@
     <div class="chapter_inner">
         <div class="chapter__text-col top-20">
             <h2 class="chapter__big-title">
-                A completely new browser engine built from scratch
+                A completely new browser engine built 100% in V
             </h2>
 
             <p class="chapter__text big-text">
 				Vox focuses on performance and minimal resource usage. It will make your device feel snappy again.
             </p>
+            <p class="chapter__text big-text">
+Vox is a heavily modified translated fork of an old C++ Ladybird codebase from 2026.03.
+</p>
 
             <div class="chapter__text" style="color: #646567; margin-bottom:0">
 				Using Hacker News as a test (JS disabled):
@@ -206,6 +212,21 @@
             </figure>
             </div>
             <button type="button" class="runs-on-vox__nav runs-on-vox__nav--next" aria-label="Next">&#8250;</button>
+        </div>
+    </div>
+</div>
+
+<div class="chapter dark no-bottom-padding">
+    <div class="chapter_inner">
+        <div class="chapter__text-col">
+            <h2 class="chapter__big-title">
+                Pixel-perfect parity with Chrome
+            </h2>
+
+            <p class="chapter__text">
+				We test all popular sites in Vox and Chrome and make sure they are literally pixel-perfect:
+				every page has to look exactly like it does in Chrome, down to the last pixel.
+            </p>
         </div>
     </div>
 </div>
@@ -320,6 +341,21 @@
 
                     <div class="chapter__text-image-block-text">
                         <h2 class="chapter__small-title">
+                            Built-in cookie warning blocker
+                        </h2>
+
+                        <p class="chapter__text">
+							Cookie warnings and consent popups are blocked automatically, so pages open straight to their content.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chapter__three-block-row">
+                <div class="chapter__text-image-block">
+
+                    <div class="chapter__text-image-block-text">
+                        <h2 class="chapter__small-title">
                             Mouse gestures
                         </h2>
 
@@ -328,9 +364,6 @@
                         </p>
                     </div>
                 </div>
-            </div>
-
-            <div class="chapter__two-block-row">
                 <div class="chapter__text-image-block">
 
                     <div class="chapter__text-image-block-text">

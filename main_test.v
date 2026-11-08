@@ -8,9 +8,11 @@ fn test_restored_home_and_preview_stats_routes() {
 	mut app := new_app(Config{})!
 	home := veb.render_request[App, Context](mut app, http.Request{ url: '/' })!
 	assert home.res.status() == .ok
-	assert home.res.body.contains('A completely new browser engine built from scratch')
+	assert home.res.body.contains('A completely new browser engine built')
 	assert home.res.body.contains('/assets/hero-chatgpt.png?v=')
 	assert home.res.body.contains('/assets/screen1.png?v=')
+	assert home.res.body.contains('/assets/favicon-32.png?v=')
+	assert home.res.body.contains('/assets/vox-logo.png?v=')
 	assert !home.res.body.contains('googletagmanager')
 	assert !home.res.body.contains('gtag(')
 	assert home.res.header.get(.set_cookie) == none
@@ -30,7 +32,7 @@ fn test_restored_home_and_preview_stats_routes() {
 
 fn test_static_assets_are_served_without_exposing_source_archive() {
 	mut app := new_app(Config{})!
-	for asset in ['style.css', 'screen1.png', 'hero-chatgpt.png', 'favicon.svg'] {
+	for asset in ['style.css', 'screen1.png', 'hero-chatgpt.png', 'favicon-32.png', 'vox-logo.png'] {
 		ctx := veb.render_request[App, Context](mut app, http.Request{
 			url: '/assets/${asset}'
 		})!
@@ -100,6 +102,28 @@ fn test_macos_download_follows_the_published_release() {
 		assert (ctx.res.header.get(.location) or { '' }) == 'https://github.com/vox-browser/vox/releases/download/0.1.1/Vox-0.1.1-arm64.dmg'
 		assert (ctx.res.header.get(.cache_control) or { '' }) == 'no-store'
 	}
+}
+
+fn test_macos_download_button_shows_the_published_dmg_size() {
+	assert format_download_size(88_943_712) == '89 MB'
+	path := os.join_path(os.vtmp_dir(), 'vox-website-size-${os.getpid()}')
+	defer {
+		os.rm(path) or {}
+	}
+	os.write_file(path, '0.1.1\n')!
+	mut app := new_app(Config{
+		version_file: path
+	})!
+	// A known size renders without a lookup; an unknown one is left out.
+	app.download_size.version = '0.1.1'
+	app.download_size.bytes = 88_943_712
+	home := veb.render_request[App, Context](mut app, http.Request{ url: '/' })!
+	assert home.res.body.contains('Download for macOS<span class="download-button__size">89 MB</span>')
+	assert !home.res.body.contains(download_size_marker)
+	mut unpublished := new_app(Config{})!
+	plain := veb.render_request[App, Context](mut unpublished, http.Request{ url: '/' })!
+	assert plain.res.body.contains('Download for macOS</a>')
+	assert !plain.res.body.contains(download_size_marker)
 }
 
 fn test_port_validation() {
