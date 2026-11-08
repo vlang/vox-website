@@ -1294,7 +1294,9 @@ a:hover {
   }
 }
 .first-page .first-page__download-block a {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: max-content;
   justify-self: center;
 }
